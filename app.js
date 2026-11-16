@@ -64,6 +64,8 @@ function renderLinkage(){
  const list=linkRows.filter(r=>(r.code+' '+r.name).includes(q)).sort((a,b)=>b[k]-a[k]);
  $('link-caption').textContent=currentLevel+' '+linkRows.length+'개 부문 · 평균 = 1.0';
  $('linkage-rows').replaceChildren(...list.map(r=>{const tr=document.createElement('tr');[r.code,r.name,r.influence.toFixed(3),r.sensitivity.toFixed(3),r.type].forEach(v=>tr.append(text('td',v)));return tr;}));
+ const core=linkRows.filter(r=>r.type==='전·후방 모두 높음').sort((a,b)=>b.influence+b.sensitivity-a.influence-a.sensitivity);
+ $('core-list').textContent='전·후방 모두 높은 산업 '+core.length+'개: '+(core.map(r=>r.name).join(', ')||'없음');
  drawPlot();
 }
 function drawPlot(){
@@ -78,7 +80,6 @@ function drawPlot(){
  const tip=document.createElement('div');tip.className='tip';tip.hidden=true;
  const show=(e,r)=>{const box=$('plot').getBoundingClientRect();tip.replaceChildren(text('b',r.name),text('span','영향력 '+r.influence.toFixed(3)+' · 감응도 '+r.sensitivity.toFixed(3)),text('span',r.type));tip.hidden=false;tip.style.left=Math.min(e.clientX-box.left+14,box.width-190)+'px';tip.style.top=(e.clientY-box.top+14)+'px';};
  for(const r of linkRows){const c=add('circle',{cx:X(r.influence),cy:Y(r.sensitivity),r:linkRows.length>200?4.5:6,fill:COLORS[r.type],'fill-opacity':.8,tabindex:0,'aria-label':r.name});c.onpointerenter=c.onpointermove=c.onclick=e=>show(e,r);c.onpointerleave=()=>{tip.hidden=true;};}
- linkRows.filter(r=>r.type==='전·후방 모두 높음').sort((a,b)=>b.influence+b.sensitivity-a.influence-a.sensitivity).slice(0,6).forEach(r=>add('text',{x:X(r.influence)+7,y:Y(r.sensitivity)-6,'font-size':12,fill:'#14213d'},r.name));
  $('plot').replaceChildren(svg,tip);
 }
 $('link-search').oninput=renderLinkage;$('link-sort').onchange=renderLinkage;
