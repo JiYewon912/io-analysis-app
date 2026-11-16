@@ -29,3 +29,4 @@ td:nth-child(n+3){font-variant-numeric:tabular-nums}
 .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.85rem;margin:10px 0}.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px}
 @media(max-width:800px){.shell{grid-template-columns:1fr}.side{position:static;height:auto}.row2{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+.plot{position:relative}.tip{position:absolute;pointer-events:none;background:#14213d;color:#fff;padding:8px 12px;border-radius:4px;font-size:.85rem;width:180px;z-index:2}.tip b,.tip span{display:block}.plot circle{cursor:pointer}

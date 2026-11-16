@@ -75,8 +75,10 @@ function drawPlot(){
  add('line',{x1:X(1),y1:P/2,x2:X(1),y2:H-P,stroke:'#f2b134','stroke-width':2});add('line',{x1:P,y1:Y(1),x2:W-P/2,y2:Y(1),stroke:'#f2b134','stroke-width':2});
  add('line',{x1:P,y1:H-P,x2:W-P/2,y2:H-P,stroke:'#5b6478'});add('line',{x1:P,y1:P/2,x2:P,y2:H-P,stroke:'#5b6478'});
  add('text',{x:W/2,y:H-12,'text-anchor':'middle','font-size':14,fill:'#14213d'},'영향력계수 (후방연쇄)');add('text',{x:16,y:H/2,'text-anchor':'middle','font-size':14,fill:'#14213d',transform:'rotate(-90 16 '+H/2+')'},'감응도계수 (전방연쇄)');
- for(const r of linkRows){const c=add('circle',{cx:X(r.influence),cy:Y(r.sensitivity),r:linkRows.length>200?3.5:5,fill:COLORS[r.type],'fill-opacity':.8});c.append(Object.assign(document.createElementNS(ns,'title'),{textContent:r.name+' · 영향력 '+r.influence.toFixed(2)+' · 감응도 '+r.sensitivity.toFixed(2)}));}
+ const tip=document.createElement('div');tip.className='tip';tip.hidden=true;
+ const show=(e,r)=>{const box=$('plot').getBoundingClientRect();tip.replaceChildren(text('b',r.name),text('span','영향력 '+r.influence.toFixed(3)+' · 감응도 '+r.sensitivity.toFixed(3)),text('span',r.type));tip.hidden=false;tip.style.left=Math.min(e.clientX-box.left+14,box.width-190)+'px';tip.style.top=(e.clientY-box.top+14)+'px';};
+ for(const r of linkRows){const c=add('circle',{cx:X(r.influence),cy:Y(r.sensitivity),r:linkRows.length>200?4.5:6,fill:COLORS[r.type],'fill-opacity':.8,tabindex:0,'aria-label':r.name});c.onpointerenter=c.onpointermove=c.onclick=e=>show(e,r);c.onpointerleave=()=>{tip.hidden=true;};}
  linkRows.filter(r=>r.type==='전·후방 모두 높음').sort((a,b)=>b.influence+b.sensitivity-a.influence-a.sensitivity).slice(0,6).forEach(r=>add('text',{x:X(r.influence)+7,y:Y(r.sensitivity)-6,'font-size':12,fill:'#14213d'},r.name));
- $('plot').replaceChildren(svg);
+ $('plot').replaceChildren(svg,tip);
 }
 $('link-search').oninput=renderLinkage;$('link-sort').onchange=renderLinkage;
