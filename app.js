@@ -15,7 +15,7 @@ async function load(buffer){
  $('validation').textContent=JSON.stringify(info.residuals,null,2)+'\n최대 절대 잔차: 허용값 1e-8 미만';
  for(const id of ['sheet','row','sector','add','run','row-search','col-search','sector-search','amount'])$(id).disabled=false;
  currentLevel=info.level;$('level-badge').textContent='2023 · 생산자가격 · '+info.level+' '+sectors.length+'개 부문';
- await explore();$('status').textContent='준비 완료 · '+info.level+' · '+sectors.length+'개 부문 · '+info.sheets.length+'개 시트 · 계수 검증 통과';
+ await explore();await loadLinkage();$('status').textContent='준비 완료 · '+info.level+' · '+sectors.length+'개 부문 · '+info.sheets.length+'개 시트 · 계수 검증 통과';
  }catch(e){$('status').textContent='준비 실패: '+e.message+' — 새로고침 후 재시도하세요.';}
 }
 let exploreSeq=0;
@@ -54,3 +54,29 @@ $('load-basic').onclick=async()=>{
   button.disabled=false;level.disabled=false;button.textContent='불러오기';
  }
 };
+
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==b.dataset.tab);});
+const COLORS={'전·후방 모두 높음':'#2f5bea','영향력 높음':'#1f9d8a','감응도 높음':'#d98a00','모두 낮음':'#9aa3b5'};
+let linkRows=[];
+async function loadLinkage(){const d=await call('influence',null);linkRows=d.rows;renderLinkage();}
+function renderLinkage(){
+ const q=$('link-search').value.trim(),k=$('link-sort').value;
+ const list=linkRows.filter(r=>(r.code+' '+r.name).includes(q)).sort((a,b)=>b[k]-a[k]);
+ $('link-caption').textContent=currentLevel+' '+linkRows.length+'개 부문 · 평균 = 1.0';
+ $('linkage-rows').replaceChildren(...list.map(r=>{const tr=document.createElement('tr');[r.code,r.name,r.influence.toFixed(3),r.sensitivity.toFixed(3),r.type].forEach(v=>tr.append(text('td',v)));return tr;}));
+ drawPlot();
+}
+function drawPlot(){
+ const W=720,H=460,P=48,xs=linkRows.map(r=>r.influence),ys=linkRows.map(r=>r.sensitivity);
+ const xmax=Math.max(1.2,...xs)*1.05,ymax=Math.max(1.2,...ys)*1.05,xmin=Math.min(0.6,...xs)*0.95;
+ const X=v=>P+(v-xmin)/(xmax-xmin)*(W-2*P),Y=v=>H-P-v/ymax*(H-2*P),ns='http://www.w3.org/2000/svg';
+ const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('role','img');svg.setAttribute('aria-label','영향력계수와 감응도계수 산점도');
+ const add=(t,a,tx)=>{const e=document.createElementNS(ns,t);for(const[n,v]of Object.entries(a))e.setAttribute(n,v);if(tx)e.textContent=tx;svg.append(e);return e;};
+ add('line',{x1:X(1),y1:P/2,x2:X(1),y2:H-P,stroke:'#f2b134','stroke-width':2});add('line',{x1:P,y1:Y(1),x2:W-P/2,y2:Y(1),stroke:'#f2b134','stroke-width':2});
+ add('line',{x1:P,y1:H-P,x2:W-P/2,y2:H-P,stroke:'#5b6478'});add('line',{x1:P,y1:P/2,x2:P,y2:H-P,stroke:'#5b6478'});
+ add('text',{x:W/2,y:H-12,'text-anchor':'middle','font-size':14,fill:'#14213d'},'영향력계수 (후방연쇄)');add('text',{x:16,y:H/2,'text-anchor':'middle','font-size':14,fill:'#14213d',transform:'rotate(-90 16 '+H/2+')'},'감응도계수 (전방연쇄)');
+ for(const r of linkRows){const c=add('circle',{cx:X(r.influence),cy:Y(r.sensitivity),r:linkRows.length>200?3.5:5,fill:COLORS[r.type],'fill-opacity':.8});c.append(Object.assign(document.createElementNS(ns,'title'),{textContent:r.name+' · 영향력 '+r.influence.toFixed(2)+' · 감응도 '+r.sensitivity.toFixed(2)}));}
+ linkRows.filter(r=>r.type==='전·후방 모두 높음').sort((a,b)=>b.influence+b.sensitivity-a.influence-a.sensitivity).slice(0,6).forEach(r=>add('text',{x:X(r.influence)+7,y:Y(r.sensitivity)-6,'font-size':12,fill:'#14213d'},r.name));
+ $('plot').replaceChildren(svg);
+}
+$('link-search').oninput=renderLinkage;$('link-sort').onchange=renderLinkage;

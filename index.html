@@ -1,9 +1,29 @@
 <!DOCTYPE html>
-
-<html lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>과제물1: 산업연관표분석 웹앱</title><link href="./style.css" rel="stylesheet"/><script defer="" src="./app.js"></script></head>
-<body><header><p id="level-badge">2023 · 생산자가격 · 기본부문·소분류·중분류·대분류</p><h1>과제물1: 산업연관표분석 웹앱</h1><p>12개 원자료 시트 탐색과 분류 수준별(기본부문 380 · 소분류 165 · 중분류 83 · 대분류 33) 수요충격 분석</p></header>
-<nav aria-label="주요 메뉴"><a href="#explorer">원자료 탐색</a><a href="#simulation">시뮬레이터</a></nav><main>
-<aside aria-label="분석 준비 상태" class="loading-status"><p id="status" role="status">분류 수준을 고르고 "불러오기" 버튼을 눌러 자료를 불러오세요.</p><details><summary>계수 검증 결과</summary><pre id="validation">아직 자료를 불러오지 않았습니다.</pre></details></aside>
-<section id="explorer"><div class="section-heading"><h2>1. 원자료 탐색</h2><div class="loader"><label>분류 수준<select id="level"><option value="io-2023-basic.xlsx">기본부문 (380개)</option><option value="io-2023-small.xlsx">소분류 (165개)</option><option value="io-2023-medium.xlsx">중분류 (83개)</option><option value="io-2023-large.xlsx">대분류 (33개)</option></select></label><button id="load-basic" type="button">불러오기</button></div></div><p>선택한 행이 각 열과 어떻게 연결되는지 확인합니다. 산업 행뿐 아니라 원표의 합계·분석지표 행도 포함됩니다.</p><label>시트<select disabled="" id="sheet"></select></label><label>행 이름 검색<input disabled="" id="row-search" placeholder="예: 자동차, 부가가치"/></label><label>행 선택<select disabled="" id="row"></select></label><p id="unit"></p><label>열 검색<input disabled="" id="col-search" placeholder="열 이름 또는 코드"/></label><div class="scroll"><table><caption id="explore-caption">기본 자료를 불러온 후 표시됩니다.</caption><thead><tr><th>열 코드</th><th>열 이름</th><th>원자료 값</th></tr></thead><tbody id="cells"></tbody></table></div><p class="note">스크롤하여 전체 열을 볼 수 있습니다. 금액표의 일반 데이터 단위는 백만원입니다. 구성비·유발계수 등 요약 행은 행 명칭을 우선 확인하세요.</p></section>
-<section id="simulation"><h2>2. 국내 생산물 최종수요 증가 시뮬레이션</h2><p>수입 완제품 구매를 제외한 국내 생산물 최종수요 증가를 입력하세요. 여러 산업의 증가액은 합산됩니다.</p><label>산업 검색<input disabled="" id="sector-search" placeholder="산업 이름 또는 코드"/></label><form id="scenario"><label>산업<select disabled="" id="sector" required=""></select></label><label>증가액 (백만원)<input disabled="" id="amount" min="0.01" required="" step="any" type="number" value="1000"/></label><p class="note">1,000백만원 = 10억원. 이번 버전은 양의 수요 증가만 지원합니다.</p><button disabled="" id="add">시나리오에 추가</button></form><ul id="basket"></ul><button disabled="" id="run">파급효과 계산</button><button id="clear">시나리오 비우기</button><p id="sim-status" role="status">시나리오를 추가하세요.</p><div hidden="" id="results"><div class="cards" id="cards"></div><h3>생산유발액 상위 15개 산업</h3><div id="bars"></div><button id="download">전체 산업 CSV 다운로드</button><div class="scroll"><table><caption>산업별 유발액 — 백만원, 생산유발액 내림차순</caption><thead><tr><th>코드</th><th>산업</th><th>생산</th><th>수입</th><th>부가가치</th></tr></thead><tbody id="result-rows"></tbody></table></div></div></section>
-</main><footer>브라우저 계산 · GitHub Pages 배포용</footer></body></html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>산업연관표분석</title><link rel="stylesheet" href="./style.css"><script defer src="./app.js"></script></head>
+<body><div class="shell">
+<aside class="side"><h1>산업연관표분석</h1><p class="sub" id="level-badge">2023년 · 생산자가격</p>
+<label>분류 수준<select id="level"><option value="io-2023-basic.xlsx">기본부문 (380개)</option><option value="io-2023-small.xlsx">소분류 (165개)</option><option value="io-2023-medium.xlsx">중분류 (83개)</option><option value="io-2023-large.xlsx">대분류 (33개)</option></select></label>
+<button id="load-basic" type="button">불러오기</button>
+<p id="status" role="status">분류 수준을 고르고 불러오기를 누르세요.</p>
+<details><summary>계수 검증 결과</summary><pre id="validation">아직 자료를 불러오지 않았습니다.</pre></details></aside>
+<main>
+<nav class="tabs" aria-label="분석 메뉴"><button type="button" data-tab="explorer" class="on">원자료</button><button type="button" data-tab="simulation">수요충격</button><button type="button" data-tab="linkage">영향력·감응도</button></nav>
+<section id="explorer" class="panel"><h2>원자료 탐색</h2><p class="note">시트와 행을 고르면 그 행이 각 열과 어떻게 연결되는지 볼 수 있습니다. 금액표의 단위는 백만원입니다.</p>
+<div class="row2"><label>시트<select disabled id="sheet"></select></label><label>행 검색<input disabled id="row-search" placeholder="예: 자동차, 부가가치"></label></div>
+<label>행 선택<select disabled id="row"></select></label><p id="unit" class="note"></p>
+<label>열 검색<input disabled id="col-search" placeholder="열 이름 또는 코드"></label>
+<div class="scroll"><table><caption id="explore-caption">자료를 불러오면 표시됩니다.</caption><thead><tr><th>열 코드</th><th>열 이름</th><th>원자료 값</th></tr></thead><tbody id="cells"></tbody></table></div></section>
+<section id="simulation" class="panel" hidden><h2>최종수요 증가 시뮬레이션</h2><p class="note">국내 생산물에 대한 최종수요 증가액을 넣으면 생산·수입·부가가치유발액을 계산합니다. 여러 산업은 합산됩니다.</p>
+<label>산업 검색<input disabled id="sector-search" placeholder="산업 이름 또는 코드"></label>
+<form id="scenario"><div class="row2"><label>산업<select disabled id="sector" required></select></label><label>증가액 (백만원)<input disabled id="amount" min="0.01" required step="any" type="number" value="1000"></label></div>
+<p class="note">1,000백만원 = 10억원. 양의 증가액만 지원합니다.</p><button disabled id="add">시나리오에 추가</button></form>
+<ul id="basket"></ul><button disabled id="run">파급효과 계산</button><button id="clear" type="button" class="ghost">시나리오 비우기</button><p id="sim-status" role="status">시나리오를 추가하세요.</p>
+<div hidden id="results"><div class="cards" id="cards"></div><h3>생산유발액 상위 15개 산업</h3><div id="bars"></div><button id="download" type="button" class="ghost">전체 산업 CSV 다운로드</button>
+<div class="scroll"><table><caption>산업별 유발액 (백만원, 생산유발액 내림차순)</caption><thead><tr><th>코드</th><th>산업</th><th>생산</th><th>수입</th><th>부가가치</th></tr></thead><tbody id="result-rows"></tbody></table></div></div></section>
+<section id="linkage" class="panel" hidden><h2>영향력계수와 감응도계수</h2>
+<p class="note"><b>영향력계수</b>는 이 산업의 수요가 늘 때 경제 전체에 미치는 파급이 평균보다 큰지(1 초과), <b>감응도계수</b>는 다른 산업의 수요가 늘 때 이 산업이 받는 영향이 평균보다 큰지(1 초과)를 보여줍니다. 생산유발계수표의 열합계·행합계를 전체 평균으로 나눠 계산합니다.</p>
+<div id="plot" class="plot"></div>
+<div class="legend"><span><i style="background:#2f5bea"></i>전·후방 모두 높음</span><span><i style="background:#1f9d8a"></i>영향력 높음</span><span><i style="background:#d98a00"></i>감응도 높음</span><span><i style="background:#9aa3b5"></i>모두 낮음</span></div>
+<div class="row2"><label>산업 검색<input id="link-search" placeholder="산업 이름 또는 코드"></label><label>정렬<select id="link-sort"><option value="influence">영향력계수 높은 순</option><option value="sensitivity">감응도계수 높은 순</option></select></label></div>
+<div class="scroll"><table><caption id="link-caption">자료를 불러오면 표시됩니다.</caption><thead><tr><th>코드</th><th>산업</th><th>영향력</th><th>감응도</th><th>유형</th></tr></thead><tbody id="linkage-rows"></tbody></table></div></section>
+</main></div></body></html>

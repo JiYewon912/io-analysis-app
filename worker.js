@@ -21,6 +21,8 @@ async function handle({id,type,payload}) {
       await py.runPythonAsync('raw_bytes = raw_input.to_py()');
       result=await py.runPythonAsync('initialize(raw_bytes)');
       await py.runPythonAsync('del raw_input, raw_bytes');
+    } else if(type==='influence') {
+      result=py.runPython('influence()');
     } else if(type==='explore') {
       py.globals.set('sheet_input',payload.sheet);
       py.globals.set('row_input',payload.row||'');

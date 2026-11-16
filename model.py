@@ -68,3 +68,14 @@ def simulate(payload):
     result.sort(key=lambda r:r['production'],reverse=True)
     return emit({'demand':float(f.sum()),'production':float(x.sum()),'imports':float(m.sum()),
                  'valueAdded':float(v.sum()),'multiplier':float(x.sum()/f.sum()),'rows':result})
+
+def influence():
+    if not valid: raise ValueError('검증된 데이터가 없습니다.')
+    n=len(codes); tot=L.sum()
+    back=L.sum(axis=0)*n/tot   # 영향력계수: 생산유발계수표의 열합계 / 열합계의 평균
+    fwd=L.sum(axis=1)*n/tot    # 감응도계수: 생산유발계수표의 행합계 / 행합계의 평균
+    def kind(b,f):
+        return '전·후방 모두 높음' if b>=1 and f>=1 else '영향력 높음' if b>=1 else '감응도 높음' if f>=1 else '모두 낮음'
+    rows=[{'code':c,'name':nm,'influence':float(b),'sensitivity':float(f),'type':kind(b,f)}
+          for c,nm,b,f in zip(codes,names,back,fwd)]
+    return emit({'rows':rows})
